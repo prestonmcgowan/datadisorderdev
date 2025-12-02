@@ -13,7 +13,7 @@
 
         body {
             overflow: hidden;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
         }
 
         #container {
@@ -48,7 +48,8 @@
         #ascii-art {
             white-space: pre;
             line-height: 1.2;
-            font-size: clamp(0.5rem, 2vw, 1rem);
+            font-size: clamp(1rem, 3vw, 2.5rem);
+            font-weight: bold;
         }
     </style>
 </head>
@@ -56,11 +57,10 @@
     <div id="container">
         <div id="background"></div>
         <div id="center-box">
-            <div id="ascii-art">Loading...</div>
+            <div id="ascii-art"></div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/figlet/1.7.0/figlet.min.js"></script>
     <script>
         // ===== CONFIGURATION VARIABLES =====
         const CONFIG = {
@@ -114,37 +114,33 @@
         centerBox.style.backgroundColor = CONFIG.colors.darkGreen;
         asciiArt.style.color = CONFIG.colors.brightGreen;
 
-        // Generate ASCII art with figlet
-        figlet.defaults({ fontPath: 'https://cdnjs.cloudflare.com/ajax/libs/figlet/1.7.0/fonts/' });
-        figlet.text(CONFIG.displayText, {
-            font: 'Shadow'
-        }, function(err, text) {
-            if (err) {
-                console.log('Error generating ASCII art:', err);
-                asciiArt.textContent = CONFIG.displayText;
-                return;
-            }
-            asciiArt.textContent = text;
-        });
+        // Set text content directly
+        asciiArt.textContent = CONFIG.displayText;
 
         // Calculate grid size
         function calculateGridSize() {
             const width = window.innerWidth;
+            const height = window.innerHeight;
             const squareSize = 20;
-            const calculatedSize = Math.floor(width / squareSize);
-            return Math.max(CONFIG.minSquares, Math.min(CONFIG.maxSquares, calculatedSize));
+            const cols = Math.floor(width / squareSize);
+            const rows = Math.floor(height / squareSize);
+            const clampedCols = Math.max(CONFIG.minSquares, Math.min(CONFIG.maxSquares, cols));
+            return { cols: clampedCols, rows: rows };
         }
 
-        let gridSize = calculateGridSize();
+        let gridConfig = calculateGridSize();
         let squares = [];
 
         function createSquares() {
             background.innerHTML = '';
             squares = [];
-            gridSize = calculateGridSize();
-            background.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            gridConfig = calculateGridSize();
+            background.style.gridTemplateColumns = `repeat(${gridConfig.cols}, ${100/gridConfig.cols}%)`;
+            background.style.gridTemplateRows = `repeat(${gridConfig.rows}, ${100/gridConfig.rows}%)`;
 
-            for (let i = 0; i < gridSize; i++) {
+            const totalSquares = gridConfig.cols * gridConfig.rows;
+            
+            for (let i = 0; i < totalSquares; i++) {
                 const square = document.createElement('div');
                 square.className = 'square';
                 const brightness = Math.random();
@@ -178,8 +174,8 @@
 
         // Handle resize
         window.addEventListener('resize', () => {
-            const newGridSize = calculateGridSize();
-            if (newGridSize !== gridSize) {
+            const newGridConfig = calculateGridSize();
+            if (newGridConfig.cols !== gridConfig.cols || newGridConfig.rows !== gridConfig.rows) {
                 createSquares();
             }
         });
